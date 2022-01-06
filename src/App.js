@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useReducer } from "react";
 
 import "./App.css";
-import Weather from "./Components/Weather";
 import Temperature from "./Components/Temperature";
 import ToggleTemp from "./Components/ToggleTemp";
 import "antd/dist/antd.css";
@@ -10,6 +9,11 @@ import { Select } from "antd";
 import WindHumid from "./Components/WindHumid";
 import Main from "./Components/Main";
 import { MainContext } from "./Context";
+import { SweatherDataKey } from "./Store/action/Action";
+import { ScityDataKey } from "./Store/action/Action";
+import { initialState, reducer } from "./Store/Reducer";
+import SunRiseSet from "./Components/SunRiseSet";
+
 const { Option } = Select;
 
 function onSearch(val) {
@@ -17,18 +21,7 @@ function onSearch(val) {
 }
 
 function App() {
-  const [weatherData, setWeatherData] = useState({});
-  const [cityData, setCityData] = useState(null);
-  const [scale, setScale] = useState("K");
-  const [scaleType, setScaleType] = useState("C");
-
-  const data = {
-    weatherData,
-    cityData,
-    scale,
-    scaleType,
-    clickValue,
-  };
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   function fetchCityData() {
     fetch(
@@ -38,8 +31,8 @@ function App() {
         })
     )
       .then((response) => response.json())
-      .then((data) => {
-        setCityData(data);
+      .then((city) => {
+        dispatch(ScityDataKey(city));
       });
   }
 
@@ -52,8 +45,8 @@ function App() {
         })
     )
       .then((response) => response.json())
-      .then((cityName) => {
-        setWeatherData(cityName);
+      .then((data) => {
+        dispatch(SweatherDataKey(data));
       });
   }
 
@@ -63,18 +56,10 @@ function App() {
     console.log("didmount success");
   }, []);
 
-  function clickValue(min, max) {
-    if (scale === "K") {
-      setScale("C");
-      setScaleType("K");
-    } else {
-      setScale("K");
-      setScaleType("C");
-    }
-  }
+  const shareContext = { state, dispatch };
 
   return (
-    <MainContext.Provider value={data}>
+    <MainContext.Provider value={shareContext}>
       <div className="container">
         <div className="header">
           <ToggleTemp />
@@ -88,8 +73,8 @@ function App() {
               option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
             }
           >
-            {cityData &&
-              cityData.data
+            {state.cityData &&
+              state.cityData.data
                 .map((item, index) => item.capital)
                 .map((item, index) => (
                   <Option value={item} key={index}>
@@ -99,25 +84,25 @@ function App() {
           </Select>
         </div>
 
-        {typeof weatherData.main === "undefined" ? (
+        {typeof state.weatherData.main === "undefined" ? (
           <div>
             <p>enter city</p>
           </div>
         ) : (
           <div className="weather-data">
-            <Weather />
+            <SunRiseSet />
             <Row>
               <Col xs={8} sm={8} md={8} lg={8} xl={8}>
                 <Temperature />
               </Col>
 
               <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-                <h2 className="white">{weatherData.name}</h2>
+                <h2 className="white">{state.weatherData.name}</h2>
                 <h1 className="white">
-                  {scale === "K"
-                    ? Math.round(weatherData.main.temp) - 273
-                    : Math.round(weatherData.main.temp)}
-                  {scaleType}
+                  {state.scale === "K"
+                    ? Math.round(state.weatherData.main.temp) - 273
+                    : Math.round(state.weatherData.main.temp)}
+                  {state.scaleType}
                 </h1>
                 <Main />
               </Col>

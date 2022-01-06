@@ -2,7 +2,8 @@ import React from "react";
 import { MainContext, useContext } from "../Context";
 
 export default function Temperature() {
-  const { scale, scaleType, weatherData } = useContext(MainContext);
+  const { state } = useContext(MainContext);
+  const { weatherData, scale, scaleType } = state;
   return (
     <div>
       <h3 className="white">
